@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="muted strong" style="margin: 0 0 6px">Welcome back, {{ request.user|display_name }}</p>
+    <h1>Your balances</h1>
+  </div>
+  <p class="muted">Across {{ group_rows|length }} group{{ group_rows|length|pluralize }}</p>
+</div>
+
+<section class="stats" aria-label="Balance summary">
+  <div class="card dark stat">
+    <span class="label">Net balance</span>
+    <span class="value">{{ net|signed_money }}</span>
+    <span class="small muted">{% if net > 0 %}Overall, you are owed money{% elif net < 0 %}Overall, you owe money{% else %}You're all settled up{% endif %}</span>
+  </div>
+  <div class="card stat">
+    <span class="label">You are owed</span>
+    <span class="value owed">{{ owed|money }}</span>
+    <span class="small muted">From {{ owed_count }} {{ owed_count|pluralize:"person,people" }}</span>
+  </div>
+  <div class="card stat">
+    <span class="label">You owe</span>
+    <span class="value owe">{{ owe|money }}</span>
+    <span class="small muted">To {{ owe_count }} {{ owe_count|pluralize:"person,people" }}</span>
+  </div>
+</section>
+
+<div class="row">
+  <section class="card col-main" aria-labelledby="groups-h">
+    <div class="card-head">
+      <h2 id="groups-h">Your groups</h2>
+      <a class="btn" href="{% url 'expenses:group_create' %}">New group</a>
+    </div>
+    {% for row in group_rows %}
+      {% include "includes/group_row.html" %}
+    {% empty %}
+      <div class="empty">
+        <p>You're not in any groups yet.</p>
+        <a class="btn primary" href="{% url 'expenses:group_create' %}">Create your first group</a>
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="card col-side" aria-labelledby="people-h" style="gap: 0">
+    <div class="card-head"><h2 id="people-h">People</h2></div>
+    {% for person, balance in people %}
+      <div class="list-row" style="padding: 12px 24px">
+        <span class="avatar sm" aria-hidden="true">{{ person|initials }}</span>
+        <span class="grow">
+          <span class="strong">{{ person|display_name }}</span>
+          <span class="small {{ balance|tone }}">{% if balance > 0 %}owes you {{ balance|money }}{% else %}you owe {{ balance|absolute|money }}{% endif %}</span>
+        </span>
+        <a class="btn sm" href="{% url 'expenses:settle_up' %}" aria-label="Settle up with {{ person|display_name }}">Settle</a>
+      </div>
+    {% empty %}
+      <p class="empty">No open balances with anyone.</p>
+    {% endfor %}
+  </section>
+</div>
+
+<section class="card" aria-labelledby="act-h">
+  <div class="card-head">
+    <h2 id="act-h">Recent activity</h2>
+    <nav class="segmented" aria-label="Filter activity">
+      <a href="?filter=all" {% if activity_filter == 'all' %}aria-current="true"{% endif %}>All</a>
+      <a href="?filter=expenses" {% if activity_filter == 'expenses' %}aria-current="true"{% endif %}>Expenses</a>
+      <a href="?filter=payments" {% if activity_filter == 'payments' %}aria-current="true"{% endif %}>Payments</a>
+    </nav>
+  </div>
+  {% for item in activity %}
+    {% include "includes/activity_row.html" with show_group=True %}
+  {% empty %}
+    <p class="empty">Nothing here yet. Add an expense to get started.</p>
+  {% endfor %}
+</section>
+{% endblock %}

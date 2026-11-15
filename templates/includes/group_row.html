@@ -1,0 +1,12 @@
+{% load money %}
+<a class="list-row" href="{{ row.group.get_absolute_url }}">
+  <span class="tile" aria-hidden="true">{{ row.group.initial }}</span>
+  <span class="grow">
+    <span class="strong">{{ row.group.name }}</span>
+    <span class="small muted">{{ row.group.members.all|length }} member{{ row.group.members.all|length|pluralize }}{% if row.group.description %} · {{ row.group.description }}{% endif %}</span>
+  </span>
+  <span class="end">
+    <span class="small muted">{% if row.balance > 0 %}you are owed{% elif row.balance < 0 %}you owe{% else %}settled up{% endif %}</span>
+    <span class="strong {{ row.balance|tone }}">{{ row.balance|absolute|money }}</span>
+  </span>
+</a>

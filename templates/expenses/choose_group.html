@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Add expense{% endblock %}
+{% block page_class %}narrow{% endblock %}
+{% block content %}
+<div>
+  <h1>Add an expense</h1>
+  <p class="muted" style="margin: 6px 0 0">Which group is it for?</p>
+</div>
+<section class="card" aria-label="Choose a group">
+  {% for group in groups %}
+    <a class="list-row" href="{% url 'expenses:expense_create' group.pk %}">
+      <span class="tile" aria-hidden="true">{{ group.initial }}</span>
+      <span class="grow"><span class="strong">{{ group.name }}</span></span>
+    </a>
+  {% empty %}
+    <div class="empty">
+      <p>Expenses live in groups. Create one first.</p>
+      <a class="btn primary" href="{% url 'expenses:group_create' %}">Create a group</a>
+    </div>
+  {% endfor %}
+</section>
+{% endblock %}

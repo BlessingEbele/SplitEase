@@ -1,0 +1,21 @@
+{% load money %}
+<div class="list-row">
+  <span class="date-chip">{{ item.date|date:"M d" }}</span>
+  <span class="grow">
+    <span class="strong">{{ item.title }}</span>
+    <span class="small muted">{% if show_group %}{{ item.group.name }} · {% endif %}{{ item.meta }}</span>
+  </span>
+  <span class="end">
+    <span class="small muted">{{ item.label }}</span>
+    <span class="strong {{ item.tone }}">{{ item.amount|money }}</span>
+  </span>
+  {% if manage %}
+    {% if item.kind == "expense" and request.user.pk in item.owners %}
+      <a class="btn sm" href="{% url 'expenses:expense_edit' item.group.pk item.obj.pk %}" aria-label="Edit {{ item.title }}">Edit</a>
+    {% elif item.kind == "payment" and request.user.pk in item.owners %}
+      <form method="post" action="{% url 'expenses:payment_delete' item.group.pk item.obj.pk %}">
+        {% csrf_token %}<button type="submit" class="btn sm danger" aria-label="Delete payment: {{ item.title }}">Delete</button>
+      </form>
+    {% endif %}
+  {% endif %}
+</div>

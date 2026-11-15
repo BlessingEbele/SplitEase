@@ -1,0 +1,11 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Create account{% endblock %}
+{% block auth_form %}
+<div>
+  <h2 style="font-size: 30px">Create your account</h2>
+  <p class="muted" style="margin: 6px 0 0">Start a group and invite people in under a minute.</p>
+</div>
+{% include "includes/form_errors.html" %}
+{% for field in form %}{% include "includes/field.html" %}{% endfor %}
+<button type="submit" class="btn primary block">Create account</button>
+{% endblock %}
