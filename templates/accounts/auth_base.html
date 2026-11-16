@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="auth">
+  <section class="auth-hero" aria-label="About SplitEase">
+    {% include "includes/brand.html" with brand_bg="#FFFFFF" brand_fg="#121615" %}
+    <div>
+      <h1>Shared costs, settled without the awkward maths.</h1>
+      <p>Track bills with flatmates, trips with friends and lunches with colleagues. SplitEase keeps the running total and suggests the fewest payments to square up.</p>
+    </div>
+    <ul>
+      <li><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 9.5 7.5 13 14 5.5" fill="none" stroke="#5EEAD4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Split equally, by exact amounts, percentage or shares</li>
+      <li><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 9.5 7.5 13 14 5.5" fill="none" stroke="#5EEAD4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Simplified debts across a whole group</li>
+      <li><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 9.5 7.5 13 14 5.5" fill="none" stroke="#5EEAD4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>One login with your email address</li>
+    </ul>
+  </section>
+  <section class="auth-main">
+    <form class="form" method="post" novalidate>
+      {% csrf_token %}
+      <nav class="auth-switch" aria-label="Sign in or create account">
+        <a href="{% url 'accounts:login' %}" {% if mode == 'login' %}aria-current="page"{% endif %}>Sign in</a>
+        <a href="{% url 'accounts:signup' %}" {% if mode == 'signup' %}aria-current="page"{% endif %}>Create account</a>
+      </nav>
+      {% block auth_form %}{% endblock %}
+    </form>
+  </section>
+</div>
+{% endblock %}

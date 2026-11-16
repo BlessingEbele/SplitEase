@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Settle up{% endblock %}
+{% block page_class %}narrow{% endblock %}
+{% block content %}
+<div>
+  <h1>Settle up</h1>
+  <p class="muted" style="margin: 6px 0 0">Record a payment you made outside SplitEase. Balances update for everyone in the group.</p>
+</div>
+
+<section class="card" aria-labelledby="pay-h">
+  <div class="card-head"><h2 id="pay-h">You pay</h2></div>
+  {% for row in you_pay %}
+    <div class="list-row">
+      <span class="avatar sm" aria-hidden="true">{{ row.user|initials }}</span>
+      <span class="grow">
+        <span class="strong">{{ row.user|display_name }}</span>
+        <span class="small muted">{{ row.group.name }}</span>
+      </span>
+      <span class="strong owe">{{ row.amount|money }}</span>
+      <a class="btn sm primary" href="{% url 'expenses:payment_create' row.group.pk %}?to={{ row.user.pk }}&amp;amount={{ row.amount }}" aria-label="Pay {{ row.user|display_name }} {{ row.amount|money }}">Pay</a>
+    </div>
+  {% empty %}
+    <p class="empty">You don't owe anyone. Nice.</p>
+  {% endfor %}
+</section>
+
+<section class="card" aria-labelledby="recv-h">
+  <div class="card-head"><h2 id="recv-h">You receive</h2></div>
+  {% for row in you_receive %}
+    <div class="list-row">
+      <span class="avatar sm" aria-hidden="true">{{ row.user|initials }}</span>
+      <span class="grow">
+        <span class="strong">{{ row.user|display_name }}</span>
+        <span class="small muted">{{ row.group.name }} · they record the payment when they pay you</span>
+      </span>
+      <span class="strong owed">{{ row.amount|money }}</span>
+    </div>
+  {% empty %}
+    <p class="empty">Nobody owes you anything right now.</p>
+  {% endfor %}
+</section>
+{% endblock %}

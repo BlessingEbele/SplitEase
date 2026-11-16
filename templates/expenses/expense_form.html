@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{% if expense %}Edit expense{% else %}Add expense{% endif %}{% endblock %}
+{% block page_class %}medium{% endblock %}
+{% block content %}
+<div class="row">
+  <form class="card card-pad form col-main" method="post" novalidate aria-labelledby="add-h" style="padding: 28px">
+    {% csrf_token %}
+    <div>
+      <h1 id="add-h" style="font-size: 30px">{% if expense %}Edit expense{% else %}Add an expense{% endif %}</h1>
+      <p class="muted" style="margin: 6px 0 0">in <a href="{{ group.get_absolute_url }}">{{ group.name }}</a></p>
+    </div>
+    {% include "includes/form_errors.html" %}
+    {% include "includes/field.html" with field=form.description %}
+
+    <div class="field-grid">
+      <div class="field">
+        <label for="{{ form.amount.id_for_label }}">Amount ({{ currency }})</label>
+        {{ form.amount }}
+        {{ form.amount.errors }}
+      </div>
+      {% include "includes/field.html" with field=form.date %}
+    </div>
+
+    {% include "includes/field.html" with field=form.paid_by %}
+
+    <fieldset class="field">
+      <legend>Split</legend>
+      <div class="segmented" id="split-method">
+        {% for radio in form.split_method %}
+          <label for="{{ radio.id_for_label }}">{{ radio.tag }}{{ radio.choice_label }}</label>
+        {% endfor %}
+      </div>
+      {{ form.split_method.errors }}
+      <p class="help" id="split-help">Tick everyone who shares this expense.</p>
+    </fieldset>
+
+    <div class="split-table" id="split-table" data-method="{{ form.split_method.value|default:'equal' }}">
+      {% for row in form.member_rows %}
+        <div class="split-row" data-member>
+          {{ row.include }}
+          <label for="{{ row.include.id_for_label }}">
+            <span class="avatar sm" aria-hidden="true">{{ row.user|initials }}</span>
+            {% if row.user == request.user %}You{% else %}{{ row.user|display_name }}{% endif %}
+          </label>
+          <label class="visually-hidden" for="{{ row.value.id_for_label }}">Split value for {{ row.user|display_name }}</label>
+          {{ row.value }}
+          <span class="share" data-share aria-live="polite">—</span>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="actions end">
+      {% if expense %}
+        <button type="submit" form="delete-expense" class="btn danger" style="margin-right: auto">Delete</button>
+      {% endif %}
+      <a class="btn" href="{{ group.get_absolute_url }}">Cancel</a>
+      <button type="submit" class="btn primary">Save expense</button>
+    </div>
+  </form>
+
+  <aside class="card dark card-pad col-side" aria-labelledby="sum-h" style="gap: 16px">
+    <h2 id="sum-h" style="font-size: 18px">Summary</h2>
+    <div style="display: flex; justify-content: space-between"><span class="muted">Total</span><span class="strong" id="sum-total">—</span></div>
+    <div style="display: flex; justify-content: space-between"><span class="muted">Split between</span><span class="strong" id="sum-count">—</span></div>
+    <div style="display: flex; justify-content: space-between"><span class="muted">Your share</span><span class="strong" id="sum-mine">—</span></div>
+    <p class="small muted" style="margin: 0">Totals here are a preview. The final split is checked when you save.</p>
+  </aside>
+</div>
+
+{% if expense %}
+<form id="delete-expense" method="post" action="{% url 'expenses:expense_delete' group.pk expense.pk %}" onsubmit="return confirm('Delete this expense?')">
+  {% csrf_token %}
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ request.user.pk|json_script:"me-id" }}
+{{ currency|json_script:"currency" }}
+<script>
+(function () {
+  const currency = JSON.parse(document.getElementById("currency").textContent);
+  const meId = JSON.parse(document.getElementById("me-id").textContent);
+  const form = document.querySelector("form.form");
+  const table = document.getElementById("split-table");
+  const amountInput = form.querySelector("[name=amount]");
+  const help = document.getElementById("split-help");
+  const helpText = {
+    equal: "Tick everyone who shares this expense.",
+    exact: "Enter how much each person owes. They must add up to the total.",
+    percent: "Enter a percentage for each person. They must add up to 100.",
+    shares: "Enter how many shares each person takes, e.g. 2 for a couple."
+  };
+  const fmt = (n) => currency + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+  function method() {
+    const checked = form.querySelector("[name=split_method]:checked");
+    return checked ? checked.value : "equal";
+  }
+
+  function update() {
+    const m = method();
+    table.dataset.method = m;
+    help.textContent = helpText[m];
+    const total = Math.max(0, parseFloat(amountInput.value) || 0);
+    const rows = [...table.querySelectorAll("[data-member]")].map((row) => {
+      const inc = row.querySelector("input[type=checkbox]");
+      const val = row.querySelector(".split-value");
+      const id = Number(inc.name.split("_")[1]);
+      return { row, id, on: inc.checked, value: parseFloat(val.value) || 0 };
+    });
+    const active = rows.filter((r) => r.on);
+    let weightSum = 0;
+    active.forEach((r) => { r.w = m === "equal" ? 1 : r.value; weightSum += r.w; });
+    let mine = 0;
+    rows.forEach((r) => {
+      let share = null;
+      if (r.on) {
+        share = m === "exact" ? r.value : weightSum ? (total * r.w) / weightSum : 0;
+        if (r.id === meId) mine = share;
+      }
+      r.row.querySelector("[data-share]").textContent = share === null ? "—" : fmt(share);
+    });
+    document.getElementById("sum-total").textContent = fmt(total);
+    document.getElementById("sum-count").textContent = active.length + (active.length === 1 ? " person" : " people");
+    document.getElementById("sum-mine").textContent = fmt(mine);
+  }
+
+  form.addEventListener("input", update);
+  form.addEventListener("change", update);
+  update();
+})();
+</script>
+{% endblock %}

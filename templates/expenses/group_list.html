@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Groups{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Groups</h1>
+  <a class="btn primary" href="{% url 'expenses:group_create' %}">New group</a>
+</div>
+<section class="card" aria-label="Your groups">
+  {% for row in group_rows %}
+    {% include "includes/group_row.html" %}
+  {% empty %}
+    <div class="empty">
+      <p>You're not in any groups yet.</p>
+      <a class="btn primary" href="{% url 'expenses:group_create' %}">Create your first group</a>
+    </div>
+  {% endfor %}
+</section>
+{% endblock %}

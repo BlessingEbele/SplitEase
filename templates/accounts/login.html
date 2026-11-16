@@ -1,0 +1,12 @@
+{% extends "accounts/auth_base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block auth_form %}
+<div>
+  <h2 style="font-size: 30px">Welcome back</h2>
+  <p class="muted" style="margin: 6px 0 0">Sign in with the email you registered with.</p>
+</div>
+{% include "includes/form_errors.html" %}
+{% for field in form %}{% include "includes/field.html" %}{% endfor %}
+<input type="hidden" name="next" value="{{ next }}">
+<button type="submit" class="btn primary block">Sign in</button>
+{% endblock %}

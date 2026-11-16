@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Record a payment{% endblock %}
+{% block page_class %}narrow{% endblock %}
+{% block content %}
+<div>
+  <h1>Record a payment</h1>
+  <p class="muted" style="margin: 6px 0 0">in <a href="{{ group.get_absolute_url }}">{{ group.name }}</a></p>
+</div>
+<form class="card card-pad form" method="post" novalidate style="padding: 28px">
+  {% csrf_token %}
+  {% include "includes/form_errors.html" %}
+  {% include "includes/field.html" with field=form.payee %}
+  {% if owed_to %}
+    <p class="help" style="margin: -12px 0 0">Suggested from simplified debts:
+      {% for member in form.fields.payee.queryset %}{% for pk, amount in owed_to.items %}{% if pk == member.pk %}{{ member|display_name }} {{ amount|money }}. {% endif %}{% endfor %}{% endfor %}
+    </p>
+  {% endif %}
+  <div class="field">
+    <label for="{{ form.amount.id_for_label }}">Amount ({{ currency }})</label>
+    {{ form.amount }}
+    {{ form.amount.errors }}
+  </div>
+  <fieldset class="field">
+    <legend>Paid with</legend>
+    <div class="segmented">
+      {% for radio in form.method %}
+        <label for="{{ radio.id_for_label }}">{{ radio.tag }}{{ radio.choice_label }}</label>
+      {% endfor %}
+    </div>
+    {{ form.method.errors }}
+  </fieldset>
+  <div class="field-grid">
+    {% include "includes/field.html" with field=form.date %}
+    {% include "includes/field.html" with field=form.note %}
+  </div>
+  <div class="actions end">
+    <a class="btn" href="{{ group.get_absolute_url }}">Cancel</a>
+    <button type="submit" class="btn primary">Record payment</button>
+  </div>
+</form>
+{% endblock %}

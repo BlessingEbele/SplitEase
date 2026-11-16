@@ -1,0 +1,46 @@
+{% load static money %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SplitEase{% endblock %} · SplitEase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/splitease.css' %}">
+</head>
+<body>
+{% block body %}
+{% with url_name=request.resolver_match.url_name %}
+<header class="site-header">
+  <nav class="site-nav" aria-label="Main">
+    {% include "includes/brand.html" %}
+    <div class="nav-links">
+      <a href="{% url 'expenses:dashboard' %}" {% if url_name == 'dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
+      <a href="{% url 'expenses:group_list' %}" {% if 'group' in url_name or 'expense' in url_name %}aria-current="page"{% endif %}>Groups</a>
+      <a href="{% url 'expenses:settle_up' %}" {% if url_name == 'settle_up' or 'payment' in url_name %}aria-current="page"{% endif %}>Settle up</a>
+    </div>
+    <a class="btn primary" href="{% url 'expenses:expense_choose_group' %}">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Add expense
+    </a>
+    <span class="avatar" title="{{ request.user.email }}" aria-label="Signed in as {{ request.user|display_name }}">{{ request.user|initials }}</span>
+    <form class="logout-form" method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="link-btn">Log out</button>
+    </form>
+  </nav>
+</header>
+{% endwith %}
+<main class="page {% block page_class %}{% endblock %}">
+  {% if messages %}
+  <ul class="messages" role="status">
+    {% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+{% endblock %}
+{% block scripts %}{% endblock %}
+</body>
+</html>

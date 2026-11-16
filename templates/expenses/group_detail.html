@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block content %}
+<a href="{% url 'expenses:group_list' %}" class="strong small" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; text-decoration: none">
+  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  All groups
+</a>
+
+<div class="page-head" style="align-items: center">
+  <div style="display: flex; align-items: center; gap: 18px">
+    <span class="tile lg" aria-hidden="true">{{ group.initial }}</span>
+    <div>
+      <h1>{{ group.name }}</h1>
+      <p class="muted small">{{ group.members.all|length }} member{{ group.members.all|length|pluralize }} · created {{ group.created_at|date:"M Y" }}{% if group.description %} · {{ group.description }}{% endif %}</p>
+    </div>
+  </div>
+  <div class="actions">
+    <a class="btn outline-dark" href="{% url 'expenses:payment_create' group.pk %}">Settle up</a>
+    <a class="btn primary" href="{% url 'expenses:expense_create' group.pk %}">Add expense</a>
+  </div>
+</div>
+
+<div class="row">
+  <section class="card col-main" aria-label="Group content">
+    <nav class="tabs" aria-label="Group views">
+      <a href="?tab=expenses" {% if tab == 'expenses' %}aria-current="page"{% endif %}>Expenses</a>
+      <a href="?tab=balances" {% if tab == 'balances' %}aria-current="page"{% endif %}>Balances</a>
+    </nav>
+
+    {% if tab == 'expenses' %}
+      {% for month in months %}
+        <div class="month-label">{{ month.month|date:"F Y" }}</div>
+        {% for item in month.items %}
+          {% include "includes/activity_row.html" with manage=True %}
+        {% endfor %}
+      {% empty %}
+        <div class="empty">
+          <p>No expenses yet.</p>
+          <a class="btn primary" href="{% url 'expenses:expense_create' group.pk %}">Add the first one</a>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="card-pad">
+        {% for row in balance_rows %}
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <div style="display: flex; justify-content: space-between; gap: 12px">
+              <span class="strong">{% if row.user == request.user %}You{% else %}{{ row.user|display_name }}{% endif %}</span>
+              <span class="strong {{ row.balance|tone }}">{{ row.balance|signed_money }}</span>
+            </div>
+            <div class="bar" aria-hidden="true"><span class="{{ row.balance|tone }}" style="width: {{ row.width }}%"></span></div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </section>
+
+  <aside class="col-side">
+    <section class="card dark stat" aria-labelledby="you-h">
+      <h2 id="you-h" class="label" style="font-family: inherit; font-size: 13px; font-weight: 500">Your position in {{ group.name }}</h2>
+      <span class="value">{{ my_balance|signed_money }}</span>
+      <span class="small muted">Total group spend: {{ total_spend|money }}</span>
+    </section>
+
+    <section class="card card-pad" aria-labelledby="simp-h">
+      <div>
+        <h2 id="simp-h" style="font-size: 18px">Simplified debts</h2>
+        <p class="small muted" style="margin: 4px 0 0">The fewest payments that clear every balance.</p>
+      </div>
+      {% for debtor, creditor, amount in transfers %}
+        <div class="transfer">
+          <span class="strong">{% if debtor == request.user %}You{% else %}{{ debtor|display_name }}{% endif %}</span>
+          <svg width="20" height="12" viewBox="0 0 20 12" role="img" aria-label="pays"><path d="M1 6h16M12 1l5 5-5 5" fill="none" stroke="#5B6461" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="strong" style="flex: 1 1 auto">{% if creditor == request.user %}You{% else %}{{ creditor|display_name }}{% endif %}</span>
+          <span class="strong">{{ amount|money }}</span>
+        </div>
+      {% empty %}
+        <p class="small muted" style="margin: 0">Everyone is settled up.</p>
+      {% endfor %}
+      <a class="btn" href="{% url 'expenses:payment_create' group.pk %}">Record a payment</a>
+    </section>
+
+    <section class="card card-pad" aria-labelledby="members-h">
+      <h2 id="members-h" style="font-size: 18px">Members</h2>
+      <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px">
+        {% for member in group.members.all %}
+          <li style="display: flex; align-items: center; gap: 10px">
+            <span class="avatar sm" aria-hidden="true">{{ member|initials }}</span>
+            <span class="strong">{{ member|display_name }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+      <form method="post" action="{% url 'expenses:group_add_member' group.pk %}" class="form" style="gap: 10px">
+        {% csrf_token %}
+        {% include "includes/field.html" with field=member_form.email %}
+        <button type="submit" class="btn">Add member</button>
+      </form>
+    </section>
+  </aside>
+</div>
+{% endblock %}

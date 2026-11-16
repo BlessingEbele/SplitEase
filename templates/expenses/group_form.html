@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}New group{% endblock %}
+{% block page_class %}narrow{% endblock %}
+{% block content %}
+<h1>Create a group</h1>
+<form class="card card-pad form" method="post">
+  {% csrf_token %}
+  {% include "includes/form_errors.html" %}
+  {% for field in form %}{% include "includes/field.html" %}{% endfor %}
+  <div class="actions end">
+    <a class="btn" href="{% url 'expenses:group_list' %}">Cancel</a>
+    <button type="submit" class="btn primary">Create group</button>
+  </div>
+</form>
+{% endblock %}
